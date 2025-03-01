@@ -1,7 +1,7 @@
 <!DOCTYPE HTML>
 <html prefix="og: https://ogp.me/ns#" data-bs-theme="dark">
     <head>
-        <title>CollabVM</title>
+        <title>NonameVM</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta charset="utf-8"/>
         <link href="../css/style.css" rel="stylesheet" type="text/css"/>
@@ -12,7 +12,7 @@
         <meta name="description" content="A website that lets you take turns controlling online virtual machines with complete strangers!"/>
         <!-- Opengraph -->
         <meta property="og:type" content="website"/>
-        <meta property="og:title" content="CollabVM"/>
+        <meta property="og:title" content="NonameVM"/>
         <meta property="og:url" content="https://computernewb.com/collab-vm/"/>
         <meta property="og:description" content="A website that lets you take turns controlling online virtual machines with complete strangers!"/>
         <meta property="og:site_name" content="Computernewb"/>
@@ -181,45 +181,40 @@
 	</div>
         <nav class="navbar navbar-expand-lg">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#"><span id="siteNameText"></span></a>
+                <a class="navbar-brand" href="#">
+                    <img src="../assets/icon.png" alt="Icon" style="width: 20px; height: 20px; margin-right: 2px;"> NonameVM<span id="siteNameText"></span>
+                </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav me-auto">
                         <li class="nav-item">
-                            <a id="homeBtn" href="#" class="nav-link active" aria-current="page"><i class="fa-solid fa-house"></i> <span id="homeBtnText"></span></a>
+                            <a id="homeBtn" href="#" class="nav-link active" aria-current="page"><i class="fa-solid fa-house"></i> <span id="homeBtnText">Home Page</span></a>
                         </li>
                         <li class="nav-item">
-                            <a href="https://computernewb.com/collab-vm/faq/" class="nav-link"><i class="fa-solid fa-circle-question"></i> <span id="faqBtnText"></span></a>
+                            <a href="https://computernewb.com/collab-vm/faq/" class="nav-link"><i class="fa-solid fa-circle-question"></i> <span id="faqBtnText">Help and Support</span></a>
                         </li>
                         <li class="nav-item">
-                            <a id="rulesBtn" href="https://computernewb.com/collab-vm/rules" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> <span id="rulesBtnText"></span></a>
+                            <a href="https://computernewb.com/collab-vm/faq/" class="nav-link"><i class="fa-solid fa-newspaper"></i> <span id="faqBtnText">News</span></a>
                         </li>
                         <li class="nav-item">
-                            <a href="https://discord.gg/a4kqb4mGyX" class="nav-link"><i class="fa-brands fa-discord"></i> Discord</a>
+                            <a id="rulesBtn" href="https://computernewb.com/collab-vm/rules" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> <span id="rulesBtnText">Rules</span></a>
                         </li>
                         <li class="nav-item">
-                            <a href="https://reddit.com/r/collabvm" class="nav-link"><i class="fa-brands fa-reddit"></i> Subreddit</a>
+                            <a href="https://reddit.com/r/collabvm" class="nav-link"><i class="fa-solid fa-envelope"></i> Communication</a>
                         </li>
                         <li class="nav-item">
-                            <a rel="me" class="nav-link" href="https://fedi.computernewb.com/@collabvm"><i class="fa-brands fa-mastodon"></i> Mastodon</a>
+                            <a href="https://reddit.com/r/collabvm" class="nav-link"><i class="fa-solid fa-comments"></i> Chat</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="https://computernewb.com/collab-vm/user-vm" class="nav-link"><i class="fa-solid fa-users"></i> AnotherVM</a>
                         </li>
                         <li class="nav-item">
-                            <a href="https://computernewb.com/collab-vm/user-vm" class="nav-link"><i class="fa-solid fa-user"></i> UserVM</a>
+                            <a id="toggleThemeBtn" href="#" class="nav-link"><i id="toggleThemeIcon" class="fa-solid fa-sun"></i> <span id="toggleThemeBtnText">Light Mode</span></a>
                         </li>
-                        <li class="nav-item">
-                            <a id="toggleThemeBtn" href="#" class="nav-link"><i id="toggleThemeIcon" class="fa-solid fa-sun"></i> <span id="toggleThemeBtnText"></span></a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a id="languageDropdownLink" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-globe"></i> <span id="languageDropdownText"></span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdownLink">
-                                <span id="languageDropdown"></span>
-                                <a class="dropdown-item" href="https://github.com/computernewb/collab-vm-1.2-webapp/wiki/Contributing-a-Language" target="_blank"><i class="fa-solid fa-plus"></i> Add Yours</a>
-                            </div>
-                        </li>
+                        
                     </ul>
                     <div class="navbar-text dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="accountDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -10,13 +10,13 @@ import 'simple-keyboard/build/css/index.css';
 import VoteStatus from './protocol/VoteStatus.js';
 import * as bootstrap from 'bootstrap';
 import MuteState from './protocol/MuteState.js';
-import { I18nStringKey, TheI18n } from './i18n.js';
+//import { I18nStringKey, TheI18n } from './i18n.js';
 import { Format } from './format.js';
 import AuthManager from './AuthManager.js';
 import dayjs from 'dayjs';
 import * as dompurify from 'dompurify';
 const _eval = window.eval;
-
+import { I18nStringKey, TheI18n } from './i18n.js';
 // Elements
 const w = window as any;
 const elements = {
@@ -406,28 +406,30 @@ async function openVM(vm: VM): Promise<void> {
 	VM!.on('rename', (oldname, newname, selfrename) => userRenamed(oldname, newname, selfrename));
 
 	VM!.on('renamestatus', (status) => {
-		// TODO: i18n these
+
 		switch (status) {
-			case 'taken':
-				alert(TheI18n.GetString(I18nStringKey.kError_UsernameTaken));
-				break;
-			case 'invalid':
-				alert(TheI18n.GetString(I18nStringKey.kError_UsernameInvalid));
-				break;
-			case 'blacklisted':
-				alert(TheI18n.GetString(I18nStringKey.kError_UsernameBlacklisted));
-				break;
-		}
+						case 'taken':
+							alert('That username is already taken');
+							break;
+						case 'invalid':
+							alert('Usernames can contain only numbers, letters, spaces, dashes, underscores, and dots, and it must be between 3 and 20 characters.');
+							break;
+						case 'blacklisted':
+							alert('That username has been blacklisted.');
+							break;
+					}
 	});
 
 	VM!.on('turn', (status) => turnUpdate(status));
 	VM!.on('vote', (status: VoteStatus) => voteUpdate(status));
 	VM!.on('voteend', () => voteEnd());
-	VM!.on('votecd', (voteCooldown) => window.alert(TheI18n.GetString(I18nStringKey.kVM_VoteCooldownTimer, voteCooldown)));
+	VM!.on('votecd', (cd) => window.alert(`Please wait ${cd} seconds before starting another vote.`));
 	VM!.on('login', (rank: Rank, perms: Permissions) => onLogin(rank, perms));
 
 	VM!.on('close', () => {
-		if (!expectedClose) alert(TheI18n.GetString(I18nStringKey.kError_UnexpectedDisconnection));
+		if (!expectedClose) alert('You have been disconnected from the server');
+
+		// Call all the unsubscribe callbacks.
 		closeVM();
 	});
 
@@ -457,7 +459,7 @@ async function openVM(vm: VM): Promise<void> {
 		throw new Error('Failed to connect to node');
 	}
 	// Set the title
-	document.title = Format('{0} - {1}', vm.id, TheI18n.GetString(I18nStringKey.kGeneric_CollabVM));
+	document.title = vm.id + ' - CollabVM';
 	// Append canvas
 	elements.vmDisplay.appendChild(VM!.canvas);
 	// Switch to the VM view
@@ -472,7 +474,7 @@ function closeVM() {
 	// Close the VM
 	VM.close();
 	VM = null;
-	document.title = TheI18n.GetString(I18nStringKey.kGeneric_CollabVM);
+	document.title = 'CollabVM';
 	turn = -1;
 	// Remove the canvas
 	elements.vmDisplay.innerHTML = '';
@@ -684,7 +686,7 @@ function turnUpdate(status: TurnStatus) {
 		user.element.classList.remove('user-turn', 'user-waiting');
 		user.element.setAttribute('data-cvm-turn', '-1');
 	}
-	elements.turnBtnText.innerHTML = TheI18n.GetString(I18nStringKey.kVMButtons_TakeTurn);
+	elements.turnBtnText.innerHTML = 'Take Turn';
 	enableOSK(false);
 
 	if (status.user !== null) {
@@ -700,14 +702,15 @@ function turnUpdate(status: TurnStatus) {
 	if (status.user?.username === w.username) {
 		turn = 0;
 		turnTimer = status.turnTime! / 1000;
-		elements.turnBtnText.innerHTML = TheI18n.GetString(I18nStringKey.kVMButtons_EndTurn);
+		elements.turnBtnText.innerHTML = 'End Turn';
 		VM!.canvas.classList.add('focused');
 		enableOSK(true);
 	}
 	if (status.queue.some((u) => u.username === w.username)) {
 		turn = status.queue.findIndex((u) => u.username === w.username) + 1;
 		turnTimer = status.queueTime! / 1000;
-		elements.turnBtnText.innerHTML = TheI18n.GetString(I18nStringKey.kVMButtons_EndTurn);
+		elements.turnBtnText.innerHTML = 'End Turn';
+	
 		VM!.canvas.classList.add('waiting');
 	}
 	if (turn === -1) elements.turnstatus.innerText = '';
@@ -732,7 +735,7 @@ function voteUpdate(status: VoteStatus) {
 
 function updateVoteEndTime() {
 	voteTimer--;
-	elements.voteTimeText.innerText = TheI18n.GetString(I18nStringKey.kVM_VoteForResetTimer, voteTimer);
+	elements.voteTimeText.innerText = voteTimer.toString();
 	if (voteTimer === 0) clearInterval(voteInterval);
 }
 
@@ -747,8 +750,8 @@ function turnIntervalCb() {
 }
 
 function setTurnStatus() {
-	if (turn === 0) elements.turnstatus.innerText = TheI18n.GetString(I18nStringKey.kVM_TurnTimeTimer, turnTimer);
-	else elements.turnstatus.innerText = TheI18n.GetString(I18nStringKey.kVM_WaitingTurnTimer, turnTimer);
+	if (turn === 0) elements.turnstatus.innerText = `Turn expires in ${turnTimer} seconds`;
+	else elements.turnstatus.innerText = `Waiting for turn in ${turnTimer} seconds`;
 }
 
 function sendChat() {
@@ -768,7 +771,7 @@ elements.chatinput.addEventListener('keypress', (e) => {
 });
 elements.changeUsernameBtn.addEventListener('click', () => {
 	let oldname = w.username.nodeName === undefined ? w.username : w.username.innerText;
-	let newname = prompt(TheI18n.GetString(I18nStringKey.kVMPrompts_EnterNewUsernamePrompt), oldname);
+	let newname = prompt('Enter new username, or leave blank to be assigned a guest username', w.username);
 	if (newname === oldname) return;
 	VM?.rename(newname);
 });
@@ -867,22 +870,22 @@ function userModOptions(user: { user: User; element: HTMLTableRowElement }) {
 	td.setAttribute('aria-expanded', 'false');
 	let ul = document.createElement('ul');
 	ul.classList.add('dropdown-menu', 'dropdown-menu-dark', 'table-dark', 'text-light');
-	if (perms.bypassturn) addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kVMButtons_EndTurn), () => VM!.endTurn(user.user.username), "mod-end-turn-btn");
-	if (perms.ban) addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_Ban), () => VM!.ban(user.user.username), "mod-ban-btn");
-	if (perms.kick) addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_Kick), () => VM!.kick(user.user.username), "mod-kick-btn");
+	if (perms.bypassturn) addUserDropdownItem(ul, 'End Turn', () => VM!.endTurn(user.user.username), "mod-end-turn-btn");
+	if (perms.ban) addUserDropdownItem(ul, 'Ban', () => VM!.ban(user.user.username), "mod-ban-btn");
+	if (perms.kick) addUserDropdownItem(ul, 'kick', () => VM!.kick(user.user.username), "mod-kick-btn");
 	if (perms.rename)
-		addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kVMButtons_ChangeUsername), () => {
-			let newname = prompt(TheI18n.GetString(I18nStringKey.kVMPrompts_AdminChangeUsernamePrompt, user.user.username));
+		addUserDropdownItem(ul, 'Rename', () => {
+			let newname = prompt(`Enter new username for ${user.user.username}`);
 			if (!newname) return;
 			VM!.renameUser(user.user.username, newname);
 		}, "mod-rename-btn");
 	if (perms.mute) {
-		addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_TempMute), () => VM!.mute(user.user.username, MuteState.Temp), "mod-temp-mute-btn");
-		addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_IndefMute), () => VM!.mute(user.user.username, MuteState.Perma), "mod-indef-mute-btn");
-		addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_Unmute), () => VM!.mute(user.user.username, MuteState.Unmuted), "mod-unmute-btn");
+		addUserDropdownItem(ul, 'Temporary Mute', () => VM!.mute(user.user.username, MuteState.Temp), "mod-temp-mute-btn");
+		addUserDropdownItem(ul, 'Indefinite Mute', () => VM!.mute(user.user.username, MuteState.Perma), "mod-indef-mute-btn");
+		addUserDropdownItem(ul, 'UnMute', () => VM!.mute(user.user.username, MuteState.Unmuted), "mod-unmute-btn");
 	}
 	if (perms.grabip)
-		addUserDropdownItem(ul, TheI18n.GetString(I18nStringKey.kAdminVMButtons_GetIP), async () => {
+		addUserDropdownItem(ul,'Grab IP', async () => {
 			let ip = await VM!.getip(user.user.username);
 			alert(ip);
 		}, "mod-get-ip-btn");
@@ -901,7 +904,7 @@ function addUserDropdownItem(ul: HTMLUListElement, text: string, func: () => voi
 }
 
 // Admin buttons
-elements.restoreBtn.addEventListener('click', () => window.confirm(TheI18n.GetString(I18nStringKey.kVMPrompts_AdminRestoreVMPrompt)) && VM?.restore());
+elements.restoreBtn.addEventListener('click', () => window.confirm('Are you sure you want to restore the VM?') && VM?.restore());
 elements.rebootBtn.addEventListener('click', () => VM?.reboot());
 elements.clearQueueBtn.addEventListener('click', () => VM?.clearQueue());
 elements.bypassTurnBtn.addEventListener('click', () => VM?.bypassTurn());
@@ -917,9 +920,9 @@ elements.indefTurnBtn.addEventListener('click', () => VM?.indefiniteTurn());
 elements.ghostTurnBtn.addEventListener('click', () => {
 	w.collabvm.ghostTurn = !w.collabvm.ghostTurn;
 	if (w.collabvm.ghostTurn)
-		elements.ghostTurnBtnText.innerText = TheI18n.GetString(I18nStringKey.kAdminVMButtons_GhostTurnOn);
+		elements.ghostTurnBtnText.innerText = 'Ghost Turn On';
 	else
-		elements.ghostTurnBtnText.innerText = TheI18n.GetString(I18nStringKey.kAdminVMButtons_GhostTurnOff);
+		elements.ghostTurnBtnText.innerText = 'Ghost Turn Off';
 });
 
 async function sendQEMUCommand() {
@@ -935,11 +938,20 @@ elements.qemuMonitorSendBtn.addEventListener('click', () => sendQEMUCommand());
 elements.qemuMonitorInput.addEventListener('keypress', (e) => e.key === 'Enter' && sendQEMUCommand());
 
 elements.osk.addEventListener('click', () => elements.oskContainer.classList.toggle('d-none'));
+
+// Public API
+w.collabvm = {
+	openVM: openVM,
+	closeVM: closeVM,
+	loadList: loadList,
+	multicollab: multicollab,
+	getVM: () => VM
+};
 // Auth stuff
 async function renderAuth() {
 	if (auth === null) throw new Error("Cannot renderAuth when auth is null.");
 	await auth.getAPIInformation();
-	elements.accountDropdownUsername.innerText = TheI18n.GetString(I18nStringKey.kNotLoggedIn);
+	elements.accountDropdownUsername.innerText = 'Not Logged in';
 	elements.accountDropdownMenuLink.style.display = "block";
 	if (!auth!.info!.registrationOpen)
 		elements.accountRegisterButton.style.display = "none";
@@ -1098,7 +1110,7 @@ const accountModal = new bootstrap.Modal(elements.accountModal);
 elements.accountModalErrorDismiss.addEventListener('click', () => elements.accountModalError.style.display = "none");
 elements.accountModalSuccessDismiss.addEventListener('click', () => elements.accountModalSuccess.style.display = "none");
 elements.accountLoginButton.addEventListener("click", () => {
-	elements.accountModalTitle.innerText = TheI18n.GetString(I18nStringKey.kGeneric_Login);
+	elements.accountModalTitle.innerText = 'Login';
 	elements.accountRegisterSection.style.display = "none";
 	elements.accountVerifyEmailSection.style.display = "none";
 	elements.accountLoginSection.style.display = "block";
@@ -1108,7 +1120,7 @@ elements.accountLoginButton.addEventListener("click", () => {
 	accountModal.show();
 });
 elements.accountRegisterButton.addEventListener("click", () => {
-	elements.accountModalTitle.innerText = TheI18n.GetString(I18nStringKey.kGeneric_Register);
+	elements.accountModalTitle.innerText = "Registration";
 	elements.accountRegisterSection.style.display = "block";
 	elements.accountVerifyEmailSection.style.display = "none";
 	elements.accountLoginSection.style.display = "none";
@@ -1118,7 +1130,7 @@ elements.accountRegisterButton.addEventListener("click", () => {
 	accountModal.show();
 });
 elements.accountSettingsButton.addEventListener("click", () => {
-	elements.accountModalTitle.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_AccountSettings);
+	elements.accountModalTitle.innerText = 'Account Settings';
 	elements.accountRegisterSection.style.display = "none";
 	elements.accountVerifyEmailSection.style.display = "none";
 	elements.accountLoginSection.style.display = "none";
@@ -1138,7 +1150,7 @@ elements.accountLogoutButton.addEventListener('click', async () => {
 	renderAuth();
 });
 elements.accountForgotPasswordButton.addEventListener('click', () => {
-	elements.accountModalTitle.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_ResetPassword);
+	elements.accountModalTitle.innerText = 'Restore Password';
 	elements.accountLoginSection.style.display = "none";
 	elements.accountResetPasswordSection.style.display = "block";
 });
@@ -1152,7 +1164,7 @@ elements.accountLoginForm.addEventListener('submit', async (e) => {
 		hcaptchaID = elements.accountLoginCaptchaContainer.getAttribute("data-hcaptcha-widget-id")!
 		var response = hcaptcha.getResponse(hcaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1166,7 +1178,7 @@ elements.accountLoginForm.addEventListener('submit', async (e) => {
 		turnstileID = elements.accountLoginTurnstileContainer.getAttribute("data-turnstile-widget-id")!
 		var response: string = turnstile.getResponse(turnstileID) || "";
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1180,7 +1192,7 @@ elements.accountLoginForm.addEventListener('submit', async (e) => {
 		recaptchaID = parseInt(elements.accountLoginRecaptchaContainer.getAttribute("data-recaptcha-widget-id")!)
 		var response = grecaptcha.getResponse(recaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1198,7 +1210,7 @@ elements.accountLoginForm.addEventListener('submit', async (e) => {
 		elements.accountLoginPassword.value = "";
 		if (result.verificationRequired) {
 			accountBeingVerified = result.username;
-			elements.accountVerifyEmailText.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_VerifyText, result.email!);
+			elements.accountVerifyEmailText.innerText = 'We sent an E-Mail to {0}. To verify your account, please enter the 8-digit code from the E-Mail below.';
 			elements.accountLoginSection.style.display = "none";
 			elements.accountVerifyEmailSection.style.display = "block";
 			return false;
@@ -1220,7 +1232,7 @@ elements.accountRegisterForm.addEventListener('submit', async (e) => {
 		hcaptchaID = elements.accountRegisterCaptchaContainer.getAttribute("data-hcaptcha-widget-id")!
 		var response = hcaptcha.getResponse(hcaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1234,7 +1246,7 @@ elements.accountRegisterForm.addEventListener('submit', async (e) => {
 		turnstileID = elements.accountRegisterTurnstileContainer.getAttribute("data-turnstile-widget-id")!
 		var response: string = turnstile.getResponse(turnstileID) || "";
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1248,7 +1260,7 @@ elements.accountRegisterForm.addEventListener('submit', async (e) => {
 		recaptchaID = parseInt(elements.accountRegisterRecaptchaContainer.getAttribute("data-recaptcha-widget-id")!)
 		var response = grecaptcha.getResponse(recaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1260,7 +1272,7 @@ elements.accountRegisterForm.addEventListener('submit', async (e) => {
 	var email = elements.accountRegisterEmail.value;
 	var dob = dayjs(elements.accountRegisterDateOfBirth.valueAsDate);
 	if (password !== elements.accountRegisterConfirmPassword.value) {
-		elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kPasswordsMustMatch);
+		elements.accountModalErrorText.innerHTML = 'Passwords must match';
 		elements.accountModalError.style.display = "block";
 		return false;
 	}
@@ -1276,7 +1288,7 @@ elements.accountRegisterForm.addEventListener('submit', async (e) => {
 		elements.accountRegisterDateOfBirth.value = "";
 		if (result.verificationRequired) {
 			accountBeingVerified = result.username;
-			elements.accountVerifyEmailText.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_VerifyText, result.email!);
+			elements.accountVerifyEmailText.innerText = 'We sent an E-Mail to {0}. To verify your account, please enter the 8-digit code from the E-Mail below. '+ result.email;
 			elements.accountRegisterSection.style.display = "none";
 			elements.accountVerifyEmailSection.style.display = "block";
 			return false;
@@ -1319,7 +1331,7 @@ elements.accountSettingsForm.addEventListener('submit', async e => {
 	var password = elements.accountSettingsNewPassword.value === "" ? undefined : elements.accountSettingsNewPassword.value;
 	var currentPassword = elements.accountSettingsCurrentPassword.value;
 	if (password && password !== elements.accountSettingsConfirmNewPassword.value) {
-		elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kPasswordsMustMatch);
+		elements.accountModalErrorText.innerHTML = 'Passwords must match';
 		elements.accountModalError.style.display = "block";
 		return false;
 	}
@@ -1336,7 +1348,7 @@ elements.accountSettingsForm.addEventListener('submit', async e => {
 		if (result.verificationRequired) {
 			renderAuth();
 			accountBeingVerified = username ?? oldUsername;
-			elements.accountVerifyEmailText.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_VerifyText, email ?? oldEmail);
+			elements.accountVerifyEmailText.innerText = 'We sent an E-Mail to {0}. To verify your account, please enter the 8-digit code from the E-Mail below.' + email + oldEmail;
 			elements.accountSettingsSection.style.display = "none";
 			elements.accountVerifyEmailSection.style.display = "block";
 			return false;
@@ -1364,7 +1376,7 @@ elements.accountResetPasswordForm.addEventListener('submit', async e => {
 		hcaptchaID = elements.accountResetPasswordCaptchaContainer.getAttribute("data-hcaptcha-widget-id")!
 		var response = hcaptcha.getResponse(hcaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1378,7 +1390,7 @@ elements.accountResetPasswordForm.addEventListener('submit', async e => {
 		turnstileID = elements.accountResetPasswordTurnstileContainer.getAttribute("data-turnstile-widget-id")!
 		var response: string = turnstile.getResponse(turnstileID) || "";
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1392,7 +1404,7 @@ elements.accountResetPasswordForm.addEventListener('submit', async e => {
 		recaptchaID = parseInt(elements.accountResetPasswordRecaptchaContainer.getAttribute("data-recaptcha-widget-id")!)
 		var response = grecaptcha.getResponse(recaptchaID);
 		if (response === "") {
-			elements.accountModalErrorText.innerHTML = TheI18n.GetString(I18nStringKey.kMissingCaptcha);
+			elements.accountModalErrorText.innerHTML = 'Please fill out the captcha.';
 			elements.accountModalError.style.display = "block";
 			return false;
 		}
@@ -1410,7 +1422,7 @@ elements.accountResetPasswordForm.addEventListener('submit', async e => {
 		resetPasswordEmail = email;
 		elements.accountResetPasswordUsername.value = "";
 		elements.accountResetPasswordEmail.value = "";
-		elements.accountVerifyPasswordResetText.innerText = TheI18n.GetString(I18nStringKey.kAccountModal_VerifyPasswordResetText, email);
+		elements.accountVerifyPasswordResetText.innerText = 'We sent an E-Mail to {0}. To reset your password, please enter the 8-digit code from the E-Mail below.', email;
 		elements.accountResetPasswordSection.style.display = "none";
 		elements.accountResetPasswordVerifySection.style.display = "block";
 	} else {
@@ -1450,13 +1462,13 @@ function loadColorTheme(dark : boolean) {
 	if (dark) {
 		darkTheme = true;
 		document.children[0].setAttribute("data-bs-theme", "dark");
-		elements.toggleThemeBtnText.innerHTML = TheI18n.GetString(I18nStringKey.kSiteButtons_LightMode);
+		elements.toggleThemeBtnText.innerHTML = 'Light Mode';
 		elements.toggleThemeIcon.classList.remove("fa-moon");
 		elements.toggleThemeIcon.classList.add("fa-sun");
 	} else {
 		darkTheme = false;
 		document.children[0].setAttribute("data-bs-theme", "light");
-		elements.toggleThemeBtnText.innerHTML = TheI18n.GetString(I18nStringKey.kSiteButtons_DarkMode);
+		elements.toggleThemeBtnText.innerHTML = 'Dark Mode';
 		elements.toggleThemeIcon.classList.remove("fa-sun");
 		elements.toggleThemeIcon.classList.add("fa-moon");
 	}
@@ -1570,7 +1582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	if (hideFlag === null) hideFlag = false;
 	elements.hideFlagCheckbox.checked = hideFlag;
 
-	document.title = TheI18n.GetString(I18nStringKey.kGeneric_CollabVM);
+	document.title = 'CollabVM';
 
 	// Load all VMs
 	loadList();
@@ -1590,9 +1602,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 		}, 5000);
 	}
 	elements.rulesBtn.addEventListener('click', e => {
-		if (TheI18n.CurrentLanguage() !== "en-us") {
+
 			e.preventDefault();
 			welcomeModal.show();
-		}
+		
 	});
 });

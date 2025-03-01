@@ -1,0 +1,223 @@
+<!DOCTYPE HTML>
+<html prefix="og: https://ogp.me/ns#">
+    <head>
+        <title>CollabVM</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta charset="utf-8"/>
+        <link href="../css/style.css" rel="stylesheet" type="text/css"/>
+        <link href="../../node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" type="text/css"/>
+        <script src="https://kit.fontawesome.com/7add23c1ae.js" crossorigin="anonymous"></script>
+        <link rel="icon" href="../assets/favicon.ico">
+        <meta name="description" content="A website that lets you take turns controlling online virtual machines with complete strangers!"/>
+        <!-- Opengraph shit -->
+        <meta property="og:type" content="website"/>
+        <meta property="og:title" content="CollabVM"/>
+        <meta property="og:url" content="https://computernewb.com/collab-vm/"/>
+        <meta property="og:description" content="A website that lets you take turns controlling online virtual machines with complete strangers!"/>
+        <meta property="og:site_name" content="Computernewb"/>
+        <!-- Using github for now until we have a canonical url -->
+        <meta property="og:image" content="https://raw.githubusercontent.com/computernewb/collab-vm-1.2-webapp/master/dist/desktop.png"/>
+        <!---->
+    </head>
+    <body class="bg-dark">
+        <div class="modal fade" id="qemuMonitorModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-light">
+                    <div class="modal-header">
+                        <h5 class="modal-title">QEMU Monitor</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <textarea id="qemuMonitorOutput" readonly="" class="form-control bg-dark text-light"></textarea>
+                        <div class="input-group">
+                            <input type="text" id="qemuMonitorInput" class="form-control bg-dark text-light" placeholder="Command"/>
+                            <button class="btn btn-outline-secondary btn-primary text-light" type="button" id="qemuMonitorSendBtn">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+	<div class="modal fade" id="welcomeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" aria-labelledby="welcomeModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-lg">
+			<div class="modal-content bg-dark text-light">
+				<div class="modal-header">
+					<h1>Welcome to CollabVM</h1>
+				</div>
+				<div class="modal-body">
+					<p>Before continuing, please familiarize yourself with our rules:</p>
+					<h3>R1. Don't break the law.</h3>
+					Do not use CollabVM or CollabVM's network to violate United States federal law, New York state law, or international law. If CollabVM becomes aware a crime has been committed through its service, you will be immediately banned, and your activities may be reported to the authorities if necessary.<br><br>CollabVM is required by law to notify law enforcement agencies if it becomes aware of the presence of child pornography on, or being transmitted through its network.<br><br>COPPA is also enforced, please do not use CollabVM if you are under the age of 13 years old.
+					<h3>R2. No running DoS/DDoS tools.</h3>
+					Do not use CollabVM to DoS/DDoS an indivdiual, business, company, or anyone else.
+					<h3>R3. No spam distribution.</h3>
+					Do not spam any emails using this service or push spam in general.
+					<h3>R4. Do not abuse any exploits.</h3>
+					Do not abuse any exploits, additionally if you see someone abusing exploits or you need to report one, please contact me at: computernewbab@gmail.com
+					<h3>R5. Don't impersonate other users.</h3>
+					Do not impersonate other members of CollabVM. If caught, you'll be temporarily disconnected, and banned if necessary.
+					<h3>R6. One vote per person.</h3>
+					Do not use any methods or tools to bypass the vote restriction. Only one vote per person is allowed, no matter what. Anybody who is caught doing this will be banned.
+					<h3>R7. No Remote Administration Tools.</h3>
+					Do not use any remote administration tools (ex: DarkComet, NanoCore, Anydesk, TeamViewer, Orcus, etc.)
+					<h3>R8. No bypassing CollabNet.</h3>
+					Do not attempt to bypass the blocking provided by CollabNet, especially if it is being used to break Rule 1, Rule 2, or Rule 7 (or run stupid over-used things).
+					<h3>R9. No performing destructive actions constantly.</h3>
+					Any user may not destroy the VM (rendering it unusable constantly), install/reinstall the operating system (except on VM7 or VM8), or run bots that do such. This includes bots that spam massive amounts of keyboard/mouse input ("kitting").
+					<h3>R10. No Cryptomining</h3>
+					Attempting to mine cryptocurrency on the VMs will result in a kick, and then a permanent ban if you keep attempting. Besides, it's not like you're gonna make any money off it.
+					<h3>NSFW Warning</h3>
+					Please note that NSFW content is allowed on our anarchy VM (VM0b0t), and is viewed regularly. In addition, while we give a good effort to keep NSFW off the main VMs, people will occasionally slip it through.
+				</div>
+				<div class="modal-footer">
+				        <button type="button" id="welcomeModalDismiss" class="btn btn-primary" data-bs-dismiss="modal">Understood</button>
+				</div>
+			</div>
+		</div>
+	</div>
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+		<div class="modal-dialog modal-md">
+			<div class="modal-content bg-dark text-light">
+				<div class="modal-header">
+					<h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+                    <div class="alert alert-danger alert-dismissible" id="badPasswordAlert" role="alert">
+                        Incorrect password.
+                        <button type="button" class="btn-close" aria-label="Close" id="incorrectPasswordDismissBtn"></button>
+                    </div>
+                    <div class="input-group">
+                        <input type="hidden" name="username" id="adminInputVMID"/>
+                        <span class="input-group-text bg-dark text-light">Password</span>
+                        <input id="adminPassword" type="password" class="form-control bg-dark text-light" placeholder="Password" name="password"/>   
+                    </div>
+
+				</div>
+				<div class="modal-footer">
+				    <button type="button" id="loginButton" class="btn btn-primary">Login</button>
+				</div>
+			</div>
+		</div>
+	</div>
+        <div class="modal fade" id="hcaptchaModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content bg-dark text-light">
+                    <div class="modal-body">
+                        <div id="captcha-box"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="#">CollabVM</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav">
+                        <li class="nav-item">
+                            <a id="homeBtn" href="#" class="nav-link active" aria-current="page"><i class="fa-solid fa-house"></i> Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="https://computernewb.com/collab-vm/faq/" class="nav-link"><i class="fa-solid fa-circle-question"></i> FAQ</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="https://computernewb.com/collab-vm/rules" class="nav-link"><i class="fa-solid fa-clipboard-check"></i> Rules</a>
+                        </li>
+			            <li class="nav-item">
+                            <a href="https://discord.gg/a4kqb4mGyX" class="nav-link"><i class="fa-brands fa-discord"></i> Discord</a>
+                        </li>
+			            <li class="nav-item">
+                            <a href="https://reddit.com/r/collabvm" class="nav-link"><i class="fa-brands fa-reddit"></i> Subreddit</a>
+                        </li>
+                        <li class="nav-item">
+                            <a rel="me" class="nav-link" href="https://fedi.computernewb.com/@collabvm"><i class="fa-brands fa-mastodon"></i> Mastodon</a>
+                        </li>
+			            <li class="nav-item">
+                            <a href="https://computernewb.com/collab-vm/user-vm" class="nav-link"><i class="fa-solid fa-user"></i> UserVM</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <div class="container-fluid" id="vmlist">
+            <div class="row"></div>
+        </div>
+        <div class="container-fluid" id="vmview">
+            <div id="vmDisplay"></div>
+            <p id="turnstatus" class="text-light"></p>
+            <div id="voteResetPanel" class="bg-dark text-light" style="display:none;">
+                Do you want to reset the vm?<br/>
+                <button class="btn btn-success" id="voteYesBtn"><i class="fa-solid fa-check"></i> Yes<span class="badge bg-secondary" id="voteYesLabel"></span></button> <button class="btn btn-danger" id="voteNoBtn"><i class="fa-solid fa-ban"></i> No<span class="badge bg-secondary" id="voteNoLabel"></span></button><br/>
+                Vote ends in <span id="votetime"></span> seconds<br/>
+                <div id="forceVotePanel">
+                    <button class="btn btn-info" id="forceVoteYesBtn"><i class="fa-solid fa-check"></i> Pass Vote</button>
+                    <button class="btn btn-info" id="forceVoteNoBtn"><i class="fa-solid fa-ban"></i> Cancel Vote</button>
+                </div>
+            </div>
+            <div id="btns">
+                <button class="btn btn-secondary" id="takeTurnBtn"><i class="fa-solid fa-computer-mouse"></i> <span id="turnBtnText"></span></button>
+                <button class="btn btn-secondary" id="oskBtn"><i class="fa-solid fa-keyboard"></i> Keyboard</button>
+                <button class="btn btn-secondary" id="changeUsernameBtn"><i class="fa-solid fa-signature"></i> Change Username</button>
+                <button class="btn btn-secondary" id="voteResetButton"><i class="fa-solid fa-rotate-left"></i> Vote for Reset</button>
+                <button class="btn btn-secondary" id="screenshotButton"><i class="fa-solid fa-camera"></i> Screenshot</button>
+                <button class="btn btn-secondary" id="ctrlAltDelBtn"><i class="fa-solid fa-gear"></i> Ctrl+Alt+Del</button>
+                <div id="staffbtns">
+                    <button class="btn btn-secondary" id="restoreBtn"><i class="fa-solid fa-rotate-left"></i> Restore</button>
+                    <button class="btn btn-secondary" id="rebootBtn"><i class="fa-solid fa-power-off"></i> Reboot</button>
+                    <button class="btn btn-secondary" id="clearQueueBtn"><i class="fa-solid fa-eraser"></i> Clear Turn Queue</button>
+                    <button class="btn btn-secondary" id="bypassTurnBtn"><i class="fa-solid fa-forward"></i> Bypass Turn</button>
+                    <button class="btn btn-secondary" id="endTurnBtn"><i class="fa-solid fa-ban"></i> End Turn</button>
+                    <button class="btn btn-secondary" id="indefTurnBtn"><i class="fa-solid fa-infinity"></i> Indefinite Turn</button>
+                    <button class="btn btn-secondary" id="qemuMonitorBtn" data-bs-toggle="modal" data-bs-target="#qemuMonitorModal"><i class="fa-solid fa-terminal"></i> QEMU Monitor</button>
+                </div>
+            </div>
+			<div class="osk-container d-none" id="osk-container">
+			  <div class="osk-main"></div>
+
+			  <div class="controlArrows">
+				<div class="osk-control"></div>
+				<div class="osk-arrows"></div>
+			  </div>
+
+			  <div class="numPad">
+				<div class="osk-numpad"></div>
+				<div class="osk-numpadEnd"></div>
+			  </div>
+			</div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="table-responsive username-table">
+                        <table class="table table-hover table-dark table-borderless">
+                            <thead>
+                                <th><i class="fa-solid fa-user"></i> Users Online (<span id="onlineusercount"></span>)</th>
+                            </thead>
+                            <tbody id="userlist"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="table-responsive chat-table" id="chatListDiv">
+                        <table class="table table-hover table-dark table-borderless">
+                            <tbody id="chatList">
+
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark text-light" id="username">Username</span>
+                        <input type="text" class="form-control bg-dark text-light" id="chat-input"/>
+                        <div class="input-group-text bg-dark text-light" id="xssCheckboxContainer">
+                            <input class="form-check-input" type="checkbox" value="" id="xssCheckbox"/>
+                            <label class="form-check-label" for="xssCheckbox">XSS</label>
+                        </div>
+                        <button class="btn btn-primary text-light" type="button" id="sendChatBtn"><i class="fa-solid fa-paper-plane"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
+        <script type="module" src="../ts/main.ts" type="application/javascript"></script>
+    </body>
+</html>
